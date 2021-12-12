@@ -49,6 +49,10 @@ impl Parser {
             match c {
                 '0' => stack.push(node!(c, false)),
                 '1' => stack.push(node!(c, true)),
+                '!' => {
+                    let child = stack.pop().context("")?;
+                    stack.push(node!(c, !child.fact, Some(child)));
+                }
                 '&' | '|' | '^' | '>' | '=' => {
                     let (rhs, lhs) = (stack.pop().context("")?, stack.pop().context("")?);
                     let node = node!(

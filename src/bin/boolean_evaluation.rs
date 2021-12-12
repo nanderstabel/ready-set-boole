@@ -29,5 +29,7 @@ mod boolean_evaluation {
         assert_eq!(eval_formula("1011||="), true);
         assert_eq!(eval_formula("10|1&"), true);
         assert_eq!(eval_formula("101|&"), true);
+        assert_eq!(eval_formula("1!"), false);
+        assert_eq!(eval_formula("0!"), true);
     }
 }
