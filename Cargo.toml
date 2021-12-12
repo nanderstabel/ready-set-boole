@@ -10,3 +10,4 @@ name = "rsb"
 
 [dependencies]
 anyhow = "1.x"
+itertools = "0.x"

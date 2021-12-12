@@ -2,18 +2,15 @@ use rsb::Parser;
 
 fn eval_formula(formula: &str) -> bool {
     let mut parser = Parser::new();
-    match parser.parse(formula) {
-        Ok(_) => {
-            println!("{:#?}", parser.tree);
-            parser.tree.unwrap().fact
-        }
+    match parser.evaluate(formula) {
+        Ok(_) => parser.tree.unwrap().fact,
         _ => false,
     }
 }
 
 #[allow(dead_code)]
 fn main() {
-    println!("{}", eval_formula("101|&"));
+    eval_formula("");
 }
 
 #[cfg(test)]

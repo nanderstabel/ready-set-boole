@@ -1,4 +1,6 @@
 use anyhow::{Context, Result};
+use std::collections::HashSet;
+use std::fmt;
 
 macro_rules! node {
     ($c:expr, $fact:expr) => {
@@ -14,21 +16,57 @@ macro_rules! node {
 
 pub type Branch = Box<Option<Node>>;
 
+pub struct TruthTable {
+    variables: Vec<char>,
+    results: Vec<bool>,
+}
+
+impl TruthTable {
+    pub fn new(variables: Vec<char>) -> Self {
+        TruthTable {
+            variables,
+            results: Vec::new(),
+        }
+    }
+}
+
+impl fmt::Display for TruthTable {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let len = self.variables.len();
+        for v in &self.variables {
+            write!(f, "| {} ", v)?;
+        }
+        write!(f, "| = |\n")?;
+        write!(f, "{}|\n", "|---".repeat(len + 1))?;
+        for (i, result) in self.results.iter().enumerate() {
+            for b in 0..len {
+                write!(
+                    f,
+                    "| {} ",
+                    if i & (1 << (len - 1 - b)) == 0 { 0 } else { 1 }
+                )?
+            }
+            write!(f, "| {} |\n", if *result { 1 } else { 0 })?;
+        }
+        write!(f, "")
+    }
+}
+
 #[derive(Debug)]
 pub struct Node {
-    c: char,
+    _c: char,
     pub fact: bool,
-    left: Branch,
-    right: Branch,
+    _left: Branch,
+    _right: Branch,
 }
 
 impl Node {
-    pub fn new(c: char, fact: bool, left: Branch, right: Branch) -> Node {
+    pub fn new(_c: char, fact: bool, _left: Branch, _right: Branch) -> Node {
         Node {
-            c,
+            _c,
             fact,
-            left,
-            right,
+            _left,
+            _right,
         }
     }
 }
@@ -42,8 +80,8 @@ impl Parser {
         Parser { tree: None }
     }
 
-    pub fn parse(&mut self, input: &str) -> Result<()> {
-        let mut lexer = input.chars().peekable();
+    pub fn evaluate(&mut self, formula: &str) -> Result<()> {
+        let mut lexer = formula.chars();
         let mut stack = Vec::new();
         while let Some(c) = lexer.next() {
             match c {
@@ -73,5 +111,35 @@ impl Parser {
         }
         self.tree = stack.pop();
         Ok(())
+    }
+
+    pub fn truth_table_from(&mut self, formula: &str) -> Result<TruthTable> {
+        let mut set = HashSet::new();
+        let mut table = TruthTable::new(
+            formula
+                .chars()
+                .filter_map(|c| match c {
+                    'A'..='Z' if set.insert(c) => Some(c),
+                    _ => None,
+                })
+                .collect::<Vec<char>>(),
+        );
+        table.variables.sort();
+        for permutation in (0..(1 << table.variables.len())).collect::<Vec<u32>>() {
+            let mut alt = String::from(formula);
+            for (i, c) in table.variables.iter().enumerate() {
+                alt = alt.replace(
+                    &c.to_string(),
+                    if permutation & (1 << table.variables.len() - 1 - i) == 0 {
+                        "0"
+                    } else {
+                        "1"
+                    },
+                );
+            }
+            self.evaluate(&alt)?;
+            table.results.push(self.tree.as_ref().unwrap().fact);
+        }
+        Ok(table)
     }
 }
