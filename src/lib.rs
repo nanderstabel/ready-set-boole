@@ -96,7 +96,9 @@ impl Parser {
                     let node = node!(
                         c,
                         match c {
-                            '&' | '>' | '=' => lhs.fact & rhs.fact,
+                            '&' => lhs.fact & rhs.fact,
+                            '=' => lhs.fact == rhs.fact,
+                            '>' => !lhs.fact | rhs.fact,
                             '|' => lhs.fact | rhs.fact,
                             '^' => lhs.fact ^ rhs.fact,
                             _ => false,

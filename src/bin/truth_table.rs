@@ -1,5 +1,5 @@
 use rsb::Parser;
-//https://www.dcode.fr/boolean-truth-table
+//TODO: https://www.dcode.fr/boolean-truth-table
 
 fn print_truth_table(formula: &str) {
     let mut parser = Parser::new();
@@ -10,7 +10,7 @@ fn print_truth_table(formula: &str) {
 
 #[allow(dead_code)]
 fn main() {
-    print_truth_table("AB&C|D^E&F&G&A&");
+    print_truth_table("AB=");
 }
 
 #[cfg(test)]
