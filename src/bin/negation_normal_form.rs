@@ -11,7 +11,7 @@ fn print_truth_table(formula: &str) -> String {
 
 #[allow(dead_code)]
 fn main() {
-    print_truth_table("AB|C|D|");
+    print_truth_table("P>");
 }
 
 #[cfg(test)]
