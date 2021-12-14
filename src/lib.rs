@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt;
 
@@ -104,11 +105,14 @@ impl Parser {
                 '0' => stack.push(false),
                 '1' => stack.push(true),
                 '!' => {
-                    let child = stack.pop().context("")?;
+                    let child = stack.pop().context("Unexpected end of formula")?;
                     stack.push(!child);
                 }
                 '&' | '|' | '^' | '>' | '=' => {
-                    let (rhs, lhs) = (stack.pop().context("")?, stack.pop().context("")?);
+                    let (rhs, lhs) = (
+                        stack.pop().context("Unexpected end of formula")?,
+                        stack.pop().context("Unexpected end of formula")?,
+                    );
                     stack.push(match c {
                         '&' => lhs & rhs,
                         '=' => lhs == rhs,
@@ -147,4 +151,82 @@ impl Parser {
         }
         false
     }
+
+    pub fn negation_normal_form_from(&mut self, formula: &str) -> Result<String> {
+        if let Ok(table) = self.truth_table_from(formula) {
+            for v in &table.variables {
+                print!("{}", v);
+            }
+            println!("");
+            for n in 0..(table.variables.len() as u32) {
+                println!(
+                    "{:04b}\t{} --> {}",
+                    gray_code(n),
+                    gray_code(n),
+                    table.results[n as usize]
+                );
+            }
+
+            let mut bitmap: Bitmap = Bitmap::new(table);
+
+            println!("\n\n{}", bitmap);
+
+            // let hm = HashMap::new();
+
+            // for j in 0..4 {
+            //     for i in 0..4 {
+
+            //     }
+            // }
+        }
+
+        Ok(String::from(formula))
+    }
+}
+
+pub struct Bitmap {
+    map: Vec<Vec<(u32, bool)>>,
+}
+
+impl Bitmap {
+    pub fn new(table: TruthTable) -> Self {
+        let (y, x) = match table.variables.len() {
+            2 => (2, 2),
+            3 => (4, 2),
+            4 => (4, 4),
+            _ => panic!("Not implemented yet"),
+        };
+        Bitmap {
+            map: (0..y)
+                .map(|j| gray_code(j))
+                .map(|j| {
+                    (0..x)
+                        .map(|i| gray_code(i))
+                        .map(|i| {
+                            (
+                                (i + (j << x / 2)),
+                                table.results[(i + (j << x / 2)) as usize],
+                            )
+                        })
+                        .collect()
+                })
+                .collect(),
+        }
+    }
+}
+
+impl fmt::Display for Bitmap {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for y in &self.map {
+            for (bit, b) in y {
+                write!(f, " {:04b}:{:5} ", bit, b)?;
+            }
+            write!(f, "\n")?;
+        }
+        Ok(())
+    }
+}
+
+pub fn gray_code(n: u32) -> u32 {
+    n ^ (n >> 1)
 }
