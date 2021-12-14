@@ -1,5 +1,4 @@
 use rsb::Parser;
-//https://www.dcode.fr/boolean-truth-table
 
 fn print_truth_table(formula: &str) -> String {
     let mut parser = Parser::new();
