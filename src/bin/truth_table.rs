@@ -13,7 +13,7 @@ fn main() {
 }
 
 #[cfg(test)]
-mod boolean_evaluation {
+mod truth_table {
     use super::*;
 
     #[test]

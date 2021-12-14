@@ -2,20 +2,6 @@ use anyhow::{Context, Result};
 use std::collections::HashSet;
 use std::fmt;
 
-macro_rules! node {
-    ($c:expr, $fact:expr) => {
-        node!($c, $fact, None, None)
-    };
-    ($c:expr, $fact:expr ,$left:expr) => {
-        node!($c, $fact, $left, None)
-    };
-    ($c:expr, $fact:expr, $left:expr, $right:expr) => {
-        Node::new($c, $fact, Box::new($left), Box::new($right))
-    };
-}
-
-pub type Branch = Box<Option<Node>>;
-
 pub struct PermutationList<'a> {
     formula: &'a str,
     variables: Vec<char>,
@@ -101,32 +87,13 @@ impl fmt::Display for TruthTable {
     }
 }
 
-#[derive(Debug)]
-pub struct Node {
-    _c: char,
-    pub fact: bool,
-    _left: Branch,
-    _right: Branch,
-}
-
-impl Node {
-    pub fn new(_c: char, fact: bool, _left: Branch, _right: Branch) -> Node {
-        Node {
-            _c,
-            fact,
-            _left,
-            _right,
-        }
-    }
-}
-
 pub struct Parser {
-    pub tree: Option<Node>,
+    pub result: Option<bool>,
 }
 
 impl Parser {
     pub fn new() -> Self {
-        Parser { tree: None }
+        Parser { result: None }
     }
 
     pub fn evaluate(&mut self, formula: &str) -> Result<()> {
@@ -134,33 +101,27 @@ impl Parser {
         let mut stack = Vec::new();
         while let Some(c) = lexer.next() {
             match c {
-                '0' => stack.push(node!(c, false)),
-                '1' => stack.push(node!(c, true)),
+                '0' => stack.push(false),
+                '1' => stack.push(true),
                 '!' => {
                     let child = stack.pop().context("")?;
-                    stack.push(node!(c, !child.fact, Some(child)));
+                    stack.push(!child);
                 }
                 '&' | '|' | '^' | '>' | '=' => {
                     let (rhs, lhs) = (stack.pop().context("")?, stack.pop().context("")?);
-                    let node = node!(
-                        c,
-                        match c {
-                            '&' => lhs.fact & rhs.fact,
-                            '=' => lhs.fact == rhs.fact,
-                            '>' => !lhs.fact | rhs.fact,
-                            '|' => lhs.fact | rhs.fact,
-                            '^' => lhs.fact ^ rhs.fact,
-                            _ => false,
-                        },
-                        Some(lhs),
-                        Some(rhs)
-                    );
-                    stack.push(node);
+                    stack.push(match c {
+                        '&' => lhs & rhs,
+                        '=' => lhs == rhs,
+                        '>' => !lhs | rhs,
+                        '|' => lhs | rhs,
+                        '^' => lhs ^ rhs,
+                        _ => false,
+                    });
                 }
                 _ => break,
             }
         }
-        self.tree = stack.pop();
+        self.result = stack.pop();
         Ok(())
     }
 
@@ -169,7 +130,7 @@ impl Parser {
         let mut permutationlist = PermutationList::new(formula);
         while let Some(permutation) = permutationlist.next() {
             self.evaluate(&permutation)?;
-            table.results.push(self.tree.as_ref().unwrap().fact);
+            table.results.push(self.result.unwrap());
         }
         table.variables.append(&mut permutationlist.variables);
         Ok(table)
@@ -179,7 +140,7 @@ impl Parser {
         let mut permutationlist = PermutationList::new(formula);
         while let Some(permutation) = permutationlist.next() {
             if self.evaluate(&permutation).is_ok() {
-                if self.tree.as_ref().unwrap().fact {
+                if self.result.unwrap() {
                     return true;
                 }
             }

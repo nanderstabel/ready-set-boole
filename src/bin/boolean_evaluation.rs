@@ -1,9 +1,9 @@
-guse rsb::Parser;
+use rsb::Parser;
 
 fn eval_formula(formula: &str) -> bool {
     let mut parser = Parser::new();
     match parser.evaluate(formula) {
-        Ok(_) => parser.tree.unwrap().fact,
+        Ok(_) => parser.result.unwrap(),
         _ => false,
     }
 }
