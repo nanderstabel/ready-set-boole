@@ -1,5 +1,5 @@
 use anyhow::{Context, Result};
-use std::collections::HashMap;
+// use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt;
 
@@ -75,16 +75,14 @@ impl fmt::Display for TruthTable {
         write!(f, "| = |\n")?;
         write!(f, "{}|\n", "|---".repeat(len + 1))?;
         for (i, result) in self.results.iter().enumerate() {
-            if *result {
-                for b in 0..len {
-                    write!(
-                        f,
-                        "| {} ",
-                        if i & (1 << (len - 1 - b)) == 0 { 0 } else { 1 }
-                    )?
-                }
-                write!(f, "| {} |\n", if *result { 1 } else { 0 })?;
+            for b in 0..len {
+                write!(
+                    f,
+                    "| {} ",
+                    if i & (1 << (len - 1 - b)) == 0 { 0 } else { 1 }
+                )?
             }
+            write!(f, "| {} |\n", if *result { 1 } else { 0 })?;
         }
         write!(f, "")
     }
@@ -131,6 +129,77 @@ impl Parser {
         Ok(())
     }
 
+    pub fn evaluateNNF(&mut self, formula: &str) -> Result<String> {
+        let mut lexer = formula.chars();
+        let mut stack = Vec::new();
+        while let Some(c) = lexer.next() {
+            // println!("{}:\t{:?}", c, stack);
+            match c {
+                'A'..='Z' | '&' | '|' => stack.push(c),
+                '!' => {
+                    // println!("{}:\t{:?}", c, stack);
+                    let c = stack.pop().context("Unexpected end of formula")?;
+                    if c == '&' || c == '|' {
+                        let mut tmp_stack = Vec::new();
+                        while let Some(c) = stack.pop() {
+                            tmp_stack.push(c);
+                        }
+                        while let Some(c) = tmp_stack.pop() {
+                            match c {
+                                'A'..='Z' => {
+                                    stack.push(c);
+                                    match tmp_stack.pop() {
+                                        Some('!') => (),
+                                        Some(c) => {
+                                            stack.push('!');
+                                            tmp_stack.push(c);
+                                        }
+                                        None => stack.push('!'),
+                                    }
+                                }
+                                '&' => stack.push('|'),
+                                '|' => stack.push('&'),
+                                _ => (),
+                            }
+                        }
+                        stack.push(if c == '&' { '|' } else { '&' });
+                    } else if c != '!' {
+                        stack.push(c);
+                        stack.push(c);
+                    }
+                }
+                '>' => {
+                    let (rhs, lhs) = (
+                        stack.pop().context("Unexpected end of formula")?,
+                        stack.pop().context("Unexpected end of formula")?,
+                    );
+                    stack.push(lhs);
+                    stack.push('!');
+                    stack.push(rhs);
+                    stack.push('|');
+                }
+                '=' => {
+                    let (rhs, lhs) = (
+                        stack.pop().context("Unexpected end of formula")?,
+                        stack.pop().context("Unexpected end of formula")?,
+                    );
+                    stack.push(lhs);
+                    stack.push('!');
+                    stack.push(rhs);
+                    stack.push('|');
+                    stack.push(rhs);
+                    stack.push('!');
+                    stack.push(lhs);
+                    stack.push('|');
+                    stack.push('&');
+                }
+                '^' => stack.push(c),
+                _ => break,
+            }
+        }
+        Ok(String::from_iter(stack))
+    }
+
     pub fn truth_table_from(&mut self, formula: &str) -> Result<TruthTable> {
         let mut table = TruthTable::new();
         let mut permutationlist = PermutationList::new(formula);
@@ -154,80 +223,80 @@ impl Parser {
         false
     }
 
-    pub fn negation_normal_form_from(&mut self, formula: &str) -> Result<String> {
-        if let Ok(table) = self.truth_table_from(formula) {
-            for v in &table.variables {
-                print!("{}", v);
-            }
-            println!("");
-            for n in 0..(table.variables.len() as u32) {
-                println!(
-                    "{:04b}\t{} --> {}",
-                    gray_code(n),
-                    gray_code(n),
-                    table.results[n as usize]
-                );
-            }
+    // pub fn negation_normal_form_from(&mut self, formula: &str) -> Result<String> {
+    //     if let Ok(table) = self.truth_table_from(formula) {
+    //         for v in &table.variables {
+    //             print!("{}", v);
+    //         }
+    //         println!("");
+    //         for n in 0..(table.variables.len() as u32) {
+    //             println!(
+    //                 "{:04b}\t{} --> {}",
+    //                 gray_code(n),
+    //                 gray_code(n),
+    //                 table.results[n as usize]
+    //             );
+    //         }
 
-            let mut bitmap: Bitmap = Bitmap::new(table);
+    //         let mut bitmap: Bitmap = Bitmap::new(table);
 
-            println!("\n\n{}", bitmap);
+    //         println!("\n\n{}", bitmap);
 
-            // let hm = HashMap::new();
+    //         // let hm = HashMap::new();
 
-            // for j in 0..4 {
-            //     for i in 0..4 {
+    //         // for j in 0..4 {
+    //         //     for i in 0..4 {
 
-            //     }
-            // }
-        }
+    //         //     }
+    //         // }
+    //     }
 
-        Ok(String::from(formula))
-    }
+    //     Ok(String::from(formula))
+    // }
 }
 
-pub struct Bitmap {
-    map: Vec<Vec<(u32, bool)>>,
-}
+// pub struct Bitmap {
+//     map: Vec<Vec<(u32, bool)>>,
+// }
 
-impl Bitmap {
-    pub fn new(table: TruthTable) -> Self {
-        let (y, x) = match table.variables.len() {
-            2 => (2, 2),
-            3 => (4, 2),
-            4 => (4, 4),
-            _ => panic!("Not implemented yet"),
-        };
-        Bitmap {
-            map: (0..y)
-                .map(|j| gray_code(j))
-                .map(|j| {
-                    (0..x)
-                        .map(|i| gray_code(i))
-                        .map(|i| {
-                            (
-                                (i + (j << x / 2)),
-                                table.results[(i + (j << x / 2)) as usize],
-                            )
-                        })
-                        .collect()
-                })
-                .collect(),
-        }
-    }
-}
+// impl Bitmap {
+//     pub fn new(table: TruthTable) -> Self {
+//         let (y, x) = match table.variables.len() {
+//             2 => (2, 2),
+//             3 => (4, 2),
+//             4 => (4, 4),
+//             _ => panic!("Not implemented yet"),
+//         };
+//         Bitmap {
+//             map: (0..y)
+//                 .map(|j| gray_code(j))
+//                 .map(|j| {
+//                     (0..x)
+//                         .map(|i| gray_code(i))
+//                         .map(|i| {
+//                             (
+//                                 (i + (j << x / 2)),
+//                                 table.results[(i + (j << x / 2)) as usize],
+//                             )
+//                         })
+//                         .collect()
+//                 })
+//                 .collect(),
+//         }
+//     }
+// }
 
-impl fmt::Display for Bitmap {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for y in &self.map {
-            for (bit, b) in y {
-                write!(f, " {:04b}:{:5} ", bit, b)?;
-            }
-            write!(f, "\n")?;
-        }
-        Ok(())
-    }
-}
+// impl fmt::Display for Bitmap {
+//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//         for y in &self.map {
+//             for (bit, b) in y {
+//                 write!(f, " {:04b}:{:5} ", bit, b)?;
+//             }
+//             write!(f, "\n")?;
+//         }
+//         Ok(())
+//     }
+// }
 
 pub fn adder(a: u32, b: u32) -> u32 {
     let (mut a, mut b) = (a, b);

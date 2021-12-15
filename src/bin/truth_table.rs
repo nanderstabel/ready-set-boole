@@ -9,7 +9,7 @@ fn print_truth_table(formula: &str) {
 
 #[allow(dead_code)]
 fn main() {
-    print_truth_table("CE>11&C&D>&11|C>&11!&F>&C1!|H>&VW^X>&11&YZ&>&CD|XV|>&1F&V!>&11&C=&");
+    print_truth_table("AB|C&!!");
 }
 
 #[cfg(test)]
@@ -18,6 +18,9 @@ mod truth_table {
 
     #[test]
     fn assert_equal() {
-        assert_eq!(print_truth_table("AB&C>DE&F>&CG>&FH>&GH!=&"), ());
+        assert_eq!(
+            print_truth_table("CE>11&C&D>&11|C>&11!&F>&C1!|H>&VW^X>&11&YZ&>&CD|XV|>&1F&V!>&11&C=&"),
+            ()
+        );
     }
 }
