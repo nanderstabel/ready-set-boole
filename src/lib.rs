@@ -75,14 +75,16 @@ impl fmt::Display for TruthTable {
         write!(f, "| = |\n")?;
         write!(f, "{}|\n", "|---".repeat(len + 1))?;
         for (i, result) in self.results.iter().enumerate() {
-            for b in 0..len {
-                write!(
-                    f,
-                    "| {} ",
-                    if i & (1 << (len - 1 - b)) == 0 { 0 } else { 1 }
-                )?
+            if *result {
+                for b in 0..len {
+                    write!(
+                        f,
+                        "| {} ",
+                        if i & (1 << (len - 1 - b)) == 0 { 0 } else { 1 }
+                    )?
+                }
+                write!(f, "| {} |\n", if *result { 1 } else { 0 })?;
             }
-            write!(f, "| {} |\n", if *result { 1 } else { 0 })?;
         }
         write!(f, "")
     }
@@ -225,6 +227,29 @@ impl fmt::Display for Bitmap {
         }
         Ok(())
     }
+}
+
+pub fn adder(a: u32, b: u32) -> u32 {
+    let (mut a, mut b) = (a, b);
+    while b != 0 {
+        let carry = (a & b) << 1;
+        a = a ^ b;
+        b = carry;
+    }
+
+    a
+}
+
+pub fn multiplier(a: u32, b: u32) -> u32 {
+    let (mut a, mut b, mut res) = (a, b, 0);
+    while b > 0 {
+        if b & 1 != 0 {
+            res = adder(res, a);
+        }
+        a = a << 1;
+        b = b >> 1;
+    }
+    res
 }
 
 pub fn gray_code(n: u32) -> u32 {

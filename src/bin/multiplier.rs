@@ -1,17 +1,4 @@
-mod adder;
-use adder::adder;
-
-fn multiplier(a: u32, b: u32) -> u32 {
-    let (mut a, mut b, mut res) = (a, b, 0);
-    while b > 0 {
-        if b & 1 != 0 {
-            res = adder(res, a);
-        }
-        a = a << 1;
-        b = b >> 1;
-    }
-    res
-}
+use rsb::multiplier;
 
 #[allow(dead_code)]
 fn main() {

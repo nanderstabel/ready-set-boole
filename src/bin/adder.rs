@@ -1,13 +1,4 @@
-pub fn adder(a: u32, b: u32) -> u32 {
-    let (mut a, mut b) = (a, b);
-    while b != 0 {
-        let carry = (a & b) << 1;
-        a = a ^ b;
-        b = carry;
-    }
-
-    a
-}
+use rsb::adder;
 
 #[allow(dead_code)]
 fn main() {
