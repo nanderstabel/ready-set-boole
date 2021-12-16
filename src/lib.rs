@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
-// use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fmt;
+use std::hash::{Hash, Hasher};
 
 pub struct PermutationList<'a> {
     formula: &'a str,
@@ -223,80 +223,158 @@ impl Parser {
         false
     }
 
-    // pub fn negation_normal_form_from(&mut self, formula: &str) -> Result<String> {
-    //     if let Ok(table) = self.truth_table_from(formula) {
-    //         for v in &table.variables {
-    //             print!("{}", v);
-    //         }
-    //         println!("");
-    //         for n in 0..(table.variables.len() as u32) {
-    //             println!(
-    //                 "{:04b}\t{} --> {}",
-    //                 gray_code(n),
-    //                 gray_code(n),
-    //                 table.results[n as usize]
-    //             );
-    //         }
+    fn find_groups(&mut self, kmap: &KMap, j: usize, i: usize) -> Group {
+        let mut set = vec![kmap.map[j][i].0];
+        for i2 in (i + 1)..(i + 4) {
+            if kmap.map[j][i2 % 4].1 == false {
+                break;
+            }
+            set.push(kmap.map[j][i2 % 4].0);
+        }
+        if set.len() == 3 {
+            set.truncate(2);
+        }
+        if set.len() == 2 {
+            for j2 in (j + 1)..(j + 4) {
+                if kmap.map[j2 % 4][i].1 == false || kmap.map[j2 % 4][(i + 1) % 4].1 == false {
+                    break;
+                }
+                set.push(kmap.map[j2 % 4][i].0);
+                set.push(kmap.map[j2 % 4][(i + 1) % 4].0);
+            }
+        }
+        if set.len() == 6 {
+            set.truncate(4);
+        }
+        set.into_iter().collect::<Group>()
+    }
 
-    //         let mut bitmap: Bitmap = Bitmap::new(table);
+    pub fn evaluate_cnf(&mut self, formula: &str) -> Result<String> {
+        if let Ok(table) = self.truth_table_from(formula) {
+            let mut kmap = KMap::from(table);
 
-    //         println!("\n\n{}", bitmap);
+            println!("\n\n{}", kmap);
 
-    //         // let hm = HashMap::new();
+            let mut sets: HashSet<Group> = HashSet::new();
+            for j in 0..4 {
+                //TODO: make dynamic
+                for i in 0..4 {
+                    //TODO: make dynamic
+                    if kmap.map[j][i].1 == true {
+                        sets.insert(vec![kmap.map[j][i].0].into_iter().collect::<Group>());
+                        sets.insert(self.find_groups(&kmap, j, i));
+                        sets.insert(self.find_groups(&kmap.get_transpose(), i, j));
+                    }
+                }
+            }
+            println!("{:?}", sets);
+            println!("\n\n{}", kmap);
+        }
 
-    //         // for j in 0..4 {
-    //         //     for i in 0..4 {
-
-    //         //     }
-    //         // }
-    //     }
-
-    //     Ok(String::from(formula))
-    // }
+        Ok(String::from(formula))
+    }
 }
 
-// pub struct Bitmap {
-//     map: Vec<Vec<(u32, bool)>>,
-// }
+#[derive(Debug)]
+pub struct Group(HashSet<u32>);
 
-// impl Bitmap {
-//     pub fn new(table: TruthTable) -> Self {
-//         let (y, x) = match table.variables.len() {
-//             2 => (2, 2),
-//             3 => (4, 2),
-//             4 => (4, 4),
-//             _ => panic!("Not implemented yet"),
-//         };
-//         Bitmap {
-//             map: (0..y)
-//                 .map(|j| gray_code(j))
-//                 .map(|j| {
-//                     (0..x)
-//                         .map(|i| gray_code(i))
-//                         .map(|i| {
-//                             (
-//                                 (i + (j << x / 2)),
-//                                 table.results[(i + (j << x / 2)) as usize],
-//                             )
-//                         })
-//                         .collect()
-//                 })
-//                 .collect(),
-//         }
-//     }
-// }
+impl Group {
+    pub fn new() -> Self {
+        Group(HashSet::new())
+    }
 
-// impl fmt::Display for Bitmap {
-//     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-//         for y in &self.map {
-//             for (bit, b) in y {
-//                 write!(f, " {:04b}:{:5} ", bit, b)?;
-//             }
-//             write!(f, "\n")?;
-//         }
-//         Ok(())
-//     }
-// }
+    pub fn insert(&mut self, i: u32) -> bool {
+        self.0.insert(i)
+    }
+}
+
+impl PartialEq for Group {
+    fn eq(&self, other: &Group) -> bool {
+        self.0.is_subset(&other.0) && other.0.is_subset(&self.0)
+    }
+}
+
+impl Eq for Group {}
+
+impl Hash for Group {
+    fn hash<H>(&self, group: &mut H)
+    where
+        H: Hasher,
+    {
+        let mut a: Vec<&u32> = self.0.iter().collect();
+        a.sort();
+        for i in a.iter() {
+            i.hash(group);
+        }
+    }
+}
+
+impl FromIterator<u32> for Group {
+    fn from_iter<I: IntoIterator<Item = u32>>(iter: I) -> Self {
+        let mut g = Group::new();
+        for i in iter {
+            g.insert(i);
+        }
+        g
+    }
+}
+
+pub struct KMap {
+    map: Vec<Vec<(u32, bool)>>,
+}
+
+impl KMap {
+    pub fn from(table: TruthTable) -> Self {
+        let (y, x) = match table.variables.len() {
+            2 => (2, 2),
+            3 => (4, 2),
+            4 => (4, 4),
+            _ => panic!("Not implemented yet"),
+        };
+        KMap {
+            map: (0..y)
+                .map(|j| gray_code(j))
+                .map(|j| {
+                    (0..x)
+                        .map(|i| gray_code(i))
+                        .map(|i| {
+                            (
+                                (i + (j << x / 2)),
+                                table.results[(i + (j << x / 2)) as usize],
+                            )
+                        })
+                        .collect()
+                })
+                .collect(),
+        }
+    }
+
+    pub fn get_transpose(&mut self) -> KMap {
+        let mut transpose: Vec<Vec<(u32, bool)>> = Vec::new();
+
+        for x in 0..self.map.len() {
+            let mut v: Vec<(u32, bool)> = Vec::new();
+            for y in 0..self.map[0].len() {
+                v.push(self.map[y][x]);
+            }
+            transpose.push(v);
+        }
+        KMap { map: transpose }
+    }
+}
+
+impl fmt::Display for KMap {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for y in &self.map {
+            for (bit, b) in y {
+                write!(f, " {:2}:{:5} ", bit, b)?;
+                // write!(f, " {:04b}:{:5} ", bit, b)?;
+            }
+            write!(f, "\n")?;
+        }
+        Ok(())
+    }
+}
 
 pub fn adder(a: u32, b: u32) -> u32 {
     let (mut a, mut b) = (a, b);
