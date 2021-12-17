@@ -141,8 +141,18 @@ impl Parser {
                     let c = stack.pop().context("Unexpected end of formula")?;
                     if c == '&' || c == '|' {
                         let mut tmp_stack = Vec::new();
+                        let mut count = 1;
                         while let Some(c) = stack.pop() {
+                            // println!("{}:\t{:?}", c, stack);
+                            count += match c {
+                                '|' | '&' => 1,
+                                '!' => 0,
+                                _ => -1,
+                            };
                             tmp_stack.push(c);
+                            if count < 0 {
+                                break;
+                            }
                         }
                         while let Some(c) = tmp_stack.pop() {
                             match c {
@@ -165,39 +175,39 @@ impl Parser {
                         stack.push(if c == '&' { '|' } else { '&' });
                     } else if c != '!' {
                         stack.push(c);
-                        stack.push(c);
+                        stack.push('!');
                     }
                 }
-                '>' => {
-                    let (rhs, lhs) = (
-                        stack.pop().context("Unexpected end of formula")?,
-                        stack.pop().context("Unexpected end of formula")?,
-                    );
-                    stack.push(lhs);
+                '>' => self.rewrite_material_condition(&mut stack),
+                '=' => self.rewrite_equivalence(&mut stack),
+                '^' => {
+                    self.rewrite_equivalence(&mut stack);
                     stack.push('!');
-                    stack.push(rhs);
-                    stack.push('|');
                 }
-                '=' => {
-                    let (rhs, lhs) = (
-                        stack.pop().context("Unexpected end of formula")?,
-                        stack.pop().context("Unexpected end of formula")?,
-                    );
-                    stack.push(lhs);
-                    stack.push('!');
-                    stack.push(rhs);
-                    stack.push('|');
-                    stack.push(rhs);
-                    stack.push('!');
-                    stack.push(lhs);
-                    stack.push('|');
-                    stack.push('&');
-                }
-                '^' => stack.push(c),
                 _ => break,
             }
         }
         Ok(String::from_iter(stack))
+    }
+
+    pub fn rewrite_material_condition(&mut self, stack: &mut Vec<char>) {
+        let (rhs, lhs) = (stack.pop().unwrap(), stack.pop().unwrap());
+        stack.push(lhs);
+        stack.push('!');
+        stack.push(rhs);
+        stack.push('|');
+    }
+    pub fn rewrite_equivalence(&mut self, stack: &mut Vec<char>) {
+        let (rhs, lhs) = (stack.pop().unwrap(), stack.pop().unwrap());
+        stack.push(lhs);
+        stack.push('!');
+        stack.push(rhs);
+        stack.push('|');
+        stack.push(rhs);
+        stack.push('!');
+        stack.push(lhs);
+        stack.push('|');
+        stack.push('&');
     }
 
     pub fn truth_table_from(&mut self, formula: &str) -> Result<TruthTable> {
@@ -211,18 +221,6 @@ impl Parser {
         Ok(table)
     }
 
-    pub fn is_satisfiable(&mut self, formula: &str) -> bool {
-        let mut permutationlist = PermutationList::new(formula);
-        while let Some(permutation) = permutationlist.next() {
-            if self.evaluate(&permutation).is_ok() {
-                if self.result.unwrap() {
-                    return true;
-                }
-            }
-        }
-        false
-    }
-
     pub fn evaluate_cnf(&mut self, formula: &str) -> Result<String> {
         if let Ok(table) = self.truth_table_from(formula) {
             let mut kmap = KMap::from(table);
@@ -234,6 +232,18 @@ impl Parser {
         }
 
         Ok(String::from(formula))
+    }
+
+    pub fn is_satisfiable(&mut self, formula: &str) -> bool {
+        let mut permutationlist = PermutationList::new(formula);
+        while let Some(permutation) = permutationlist.next() {
+            if self.evaluate(&permutation).is_ok() {
+                if self.result.unwrap() {
+                    return true;
+                }
+            }
+        }
+        false
     }
 }
 
@@ -249,12 +259,12 @@ impl Group {
         self.0.insert(i)
     }
 
-    pub fn union<'a>(&'a self, other: &'a Group) -> Group {
-        let this = self.0.iter().cloned();
-        let that = other.0.iter().cloned();
+    // pub fn union<'a>(&'a self, other: &'a Group) -> Group {
+    //     let this = self.0.iter().cloned();
+    //     let that = other.0.iter().cloned();
 
-        Group(this.union(&that))
-    }
+    //     Group(this.union(&that))
+    // }
 }
 
 impl PartialEq for Group {
@@ -376,11 +386,11 @@ impl KMap {
     pub fn get_minterms(&mut self) -> HashSet<Group> {
         let groups = self.get_groups();
 
-        let mut union = Group::new();
-        for group in groups.iter() {
-            union = union.union(group);
-        }
-        println!("{:?}", union);
+        // let mut union = Group::new();
+        // for group in groups.iter() {
+        //     union = union.union(group);
+        // }
+        // println!("{:?}", union);
 
         groups
     }

@@ -9,7 +9,8 @@ fn print_truth_table(formula: &str) {
 
 #[allow(dead_code)]
 fn main() {
-    print_truth_table("AB|C&!!");
+    print_truth_table("AB=");
+    print_truth_table("AB^");
 }
 
 #[cfg(test)]
