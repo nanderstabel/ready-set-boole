@@ -105,7 +105,7 @@ impl KMap {
         }
         let mut collection = groups.iter().collect::<Vec<_>>();
         collection.sort_by(|a, b| b.len().cmp(&a.len()));
-        for count in 2..collection.len() {
+        for count in 1..=collection.len() {
             for combination in collection.iter().permutations(count) {
                 let mut union = Group::new();
                 for group in &combination {
