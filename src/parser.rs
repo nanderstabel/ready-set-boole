@@ -44,7 +44,18 @@ impl Parser {
         Ok(())
     }
 
-    pub fn evaluateNNF(&mut self, formula: &str) -> Result<String> {
+    pub fn truth_table_from(&mut self, formula: &str) -> Result<TruthTable> {
+        let mut table = TruthTable::new();
+        let mut permutationlist = PermutationList::new(formula);
+        while let Some(permutation) = permutationlist.next() {
+            self.evaluate(&permutation)?;
+            table.results.push(self.result.unwrap());
+        }
+        table.variables.append(&mut permutationlist.variables);
+        Ok(table)
+    }
+
+    pub fn evaluate_nnf(&mut self, formula: &str) -> Result<String> {
         let mut lexer = formula.chars();
         let mut stack = Vec::new();
         while let Some(c) = lexer.next() {
@@ -125,17 +136,6 @@ impl Parser {
         stack.push('&');
     }
 
-    pub fn truth_table_from(&mut self, formula: &str) -> Result<TruthTable> {
-        let mut table = TruthTable::new();
-        let mut permutationlist = PermutationList::new(formula);
-        while let Some(permutation) = permutationlist.next() {
-            self.evaluate(&permutation)?;
-            table.results.push(self.result.unwrap());
-        }
-        table.variables.append(&mut permutationlist.variables);
-        Ok(table)
-    }
-
     pub fn evaluate_cnf(&mut self, formula: &str) -> Result<String> {
         if let Ok(table) = self.truth_table_from(formula) {
             let mut kmap = KMap::from(table);
@@ -143,7 +143,6 @@ impl Parser {
             println!("\n\n{}", kmap);
             let minterms = kmap.get_minterms();
             println!("{:?}", minterms);
-            println!("\n\n{}", kmap);
         }
 
         Ok(String::from(formula))

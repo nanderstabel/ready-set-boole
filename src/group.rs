@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 
 #[derive(Debug)]
-pub struct Group(HashSet<u32>);
+pub struct Group(pub HashSet<u32>);
 
 impl Group {
     pub fn new() -> Self {
@@ -13,12 +13,15 @@ impl Group {
         self.0.insert(i)
     }
 
-    // pub fn union<'a>(&'a self, other: &'a Group) -> Group {
-    //     let this = self.0.iter().cloned();
-    //     let that = other.0.iter().cloned();
+    pub fn union<'a>(self, other: &Group) -> Group {
+        let mut u = self.0;
+        u.extend(&other.0);
+        Group(u)
+    }
 
-    //     Group(this.union(&that))
-    // }
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
 }
 
 impl PartialEq for Group {

@@ -1,8 +1,8 @@
-use parser::Parser;
+use rsb::parser::Parser;
 
 fn negation_normal_form(formula: &str) -> String {
     let mut parser = Parser::new();
-    if let Ok(nnf) = parser.evaluateNNF(formula) {
+    if let Ok(nnf) = parser.evaluate_nnf(formula) {
         println!("\n{:?}", nnf);
         return nnf;
     }

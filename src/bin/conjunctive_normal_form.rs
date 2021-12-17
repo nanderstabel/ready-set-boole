@@ -1,4 +1,4 @@
-use super::parser::Parser;
+use rsb::parser::Parser;
 
 fn conjunction_normal_form(formula: &str) -> String {
     let mut parser = Parser::new();
@@ -11,7 +11,7 @@ fn conjunction_normal_form(formula: &str) -> String {
 
 #[allow(dead_code)]
 fn main() {
-    conjunction_normal_form("AB|C|D|A!B!&C!&D!|");
+    conjunction_normal_form("A!");
 }
 
 #[cfg(test)]

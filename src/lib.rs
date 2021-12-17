@@ -1,8 +1,8 @@
-mod group;
-mod kmap;
-mod parser;
-mod permutationlist;
-mod truthtable;
+pub mod group;
+pub mod kmap;
+pub mod parser;
+pub mod permutationlist;
+pub mod truthtable;
 
 pub fn adder(a: u32, b: u32) -> u32 {
     let (mut a, mut b) = (a, b);

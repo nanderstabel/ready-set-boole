@@ -1,4 +1,4 @@
-use parser::Parser;
+use rsb::parser::Parser;
 
 fn eval_formula(formula: &str) -> bool {
     let mut parser = Parser::new();

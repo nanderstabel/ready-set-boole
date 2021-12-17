@@ -1,4 +1,4 @@
-use parser::Parser;
+use rsb::parser::Parser;
 
 fn print_truth_table(formula: &str) {
     let mut parser = Parser::new();
