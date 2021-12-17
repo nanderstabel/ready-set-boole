@@ -139,10 +139,15 @@ impl Parser {
     pub fn evaluate_cnf(&mut self, formula: &str) -> Result<String> {
         if let Ok(table) = self.truth_table_from(formula) {
             let mut kmap = KMap::from(table);
-
             println!("\n\n{}", kmap);
-            let minterms = kmap.get_minterms();
-            println!("{:?}", minterms);
+            if let Some(minterms) = kmap.get_minterms() {
+                for term in minterms {
+                    for b in term.0 {
+                        println!("{:04b}: {}", b, b);
+                    }
+                    println!("");
+                }
+            }
         }
 
         Ok(String::from(formula))

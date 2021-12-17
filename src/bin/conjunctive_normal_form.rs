@@ -11,7 +11,7 @@ fn conjunction_normal_form(formula: &str) -> String {
 
 #[allow(dead_code)]
 fn main() {
-    conjunction_normal_form("AB&");
+    conjunction_normal_form("AB&C|D^");
 }
 
 #[cfg(test)]

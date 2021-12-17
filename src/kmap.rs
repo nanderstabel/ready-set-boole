@@ -60,7 +60,7 @@ impl KMap {
         let (x, y) = (self.x, self.y);
         let mut set = vec![self.map[j][i].0];
         for i2 in (i + 1)..(i + x) {
-            if self.map[j][i2 % x].1 == false {
+            if self.map[j][i2 % x].1 != false {
                 break;
             }
             set.push(self.map[j][i2 % x].0);
@@ -70,7 +70,7 @@ impl KMap {
         }
         if set.len() == 2 {
             for j2 in (j + 1)..(j + y) {
-                if self.map[j2 % y][i].1 == false || self.map[j2 % y][(i + 1) % x].1 == false {
+                if self.map[j2 % y][i].1 != false || self.map[j2 % y][(i + 1) % x].1 != false {
                     break;
                 }
                 set.push(self.map[j2 % y][i].0);
@@ -87,7 +87,7 @@ impl KMap {
         let mut sets: HashSet<Group> = HashSet::new();
         for j in 0..self.y {
             for i in 0..self.x {
-                if self.map[j][i].1 == true {
+                if self.map[j][i].1 == false {
                     sets.insert(vec![self.map[j][i].0].into_iter().collect());
                     sets.insert(self.find_groups(j, i));
                     sets.insert(self.get_transpose().find_groups(i, j));
