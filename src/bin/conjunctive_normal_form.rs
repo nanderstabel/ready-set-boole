@@ -1,4 +1,4 @@
-use rsb::Parser;
+use super::parser::Parser;
 
 fn conjunction_normal_form(formula: &str) -> String {
     let mut parser = Parser::new();

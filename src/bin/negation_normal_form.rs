@@ -1,4 +1,4 @@
-use rsb::Parser;
+use parser::Parser;
 
 fn negation_normal_form(formula: &str) -> String {
     let mut parser = Parser::new();
@@ -27,7 +27,7 @@ mod negation_normal_form {
     fn assert_equal() {
         assert_eq!(negation_normal_form("AB|C&!"), "A!B!&C!|");
     }
-	
+
     #[test]
     fn material_conditions() {
         assert_eq!(negation_normal_form("AB>"), "A!B|");
@@ -35,7 +35,7 @@ mod negation_normal_form {
         assert_eq!(negation_normal_form("AB!>"), "A!B!|");
         assert_eq!(negation_normal_form("A!B!>"), "AB!|");
     }
-	
+
     #[test]
     fn equivalence() {
         assert_eq!(negation_normal_form("AB="), "A!B|B!A|&");
@@ -43,7 +43,7 @@ mod negation_normal_form {
         assert_eq!(negation_normal_form("AB!="), "A!B!|BA|&");
         assert_eq!(negation_normal_form("A!B!="), "AB!|BA!|&");
     }
-	
+
     #[test]
     fn morgans_law() {
         assert_eq!(negation_normal_form("AB&!"), "A!B!|");
