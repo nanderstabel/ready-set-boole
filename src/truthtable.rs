@@ -1,5 +1,6 @@
 use std::fmt;
 
+#[derive(PartialEq)]
 pub struct TruthTable {
     pub variables: Vec<char>,
     pub results: Vec<bool>,
@@ -33,5 +34,11 @@ impl fmt::Display for TruthTable {
             write!(f, "| {} |\n", if *result { 1 } else { 0 })?;
         }
         write!(f, "")
+    }
+}
+
+impl fmt::Debug for TruthTable {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        fmt::Display::fmt(self, f)
     }
 }
