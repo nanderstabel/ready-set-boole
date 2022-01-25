@@ -55,40 +55,45 @@ impl Parser {
         Ok(table)
     }
 
+    fn get_child(&mut self, stack: &mut Vec<char>) -> Vec<char> {
+        let mut child = Vec::new();
+        let mut count = 0;
+        while let Some(c) = stack.pop() {
+            count += match c {
+                '|' | '&' => 1,
+                '!' => 0,
+                _ => -1,
+            };
+            child.push(c);
+            if count < 0 {
+                break;
+            }
+        }
+        child
+    }
+
     pub fn evaluate_nnf(&mut self, formula: &str) -> Result<String> {
         let mut lexer = formula.chars();
         let mut stack = Vec::new();
         while let Some(c) = lexer.next() {
-            // println!("{}:\t{:?}", c, stack);
+            println!("{}:\t{:?}", c, stack);
             match c {
                 'A'..='Z' | '&' | '|' => stack.push(c),
                 '!' => {
                     // println!("{}:\t{:?}", c, stack);
                     let c = stack.pop().context("Unexpected end of formula")?;
                     if c == '&' || c == '|' {
-                        let mut tmp_stack = Vec::new();
-                        let mut count = 1;
-                        while let Some(c) = stack.pop() {
-                            // println!("{}:\t{:?}", c, stack);
-                            count += match c {
-                                '|' | '&' => 1,
-                                '!' => 0,
-                                _ => -1,
-                            };
-                            tmp_stack.push(c);
-                            if count < 0 {
-                                break;
-                            }
-                        }
-                        while let Some(c) = tmp_stack.pop() {
+                        let mut children = self.get_child(&mut stack);
+                        children.append(&mut self.get_child(&mut stack));
+                        while let Some(c) = children.pop() {
                             match c {
                                 'A'..='Z' => {
                                     stack.push(c);
-                                    match tmp_stack.pop() {
+                                    match children.pop() {
                                         Some('!') => (),
                                         Some(c) => {
                                             stack.push('!');
-                                            tmp_stack.push(c);
+                                            children.push(c);
                                         }
                                         None => stack.push('!'),
                                     }
@@ -116,24 +121,39 @@ impl Parser {
         Ok(String::from_iter(stack))
     }
 
-    pub fn rewrite_material_condition(&mut self, stack: &mut Vec<char>) {
-        let (rhs, lhs) = (stack.pop().unwrap(), stack.pop().unwrap());
-        stack.push(lhs);
-        stack.push('!');
-        stack.push(rhs);
+    fn rewrite_material_condition(&mut self, stack: &mut Vec<char>) {
+        let (mut right, mut left) = (self.get_child(stack), self.get_child(stack));
+        while let Some(c) = left.pop() {
+            match c {
+                'A'..='Z' => {
+                    stack.push(c);
+                    match left.pop() {
+                        Some('!') => (),
+                        Some(c) => {
+                            stack.push('!');
+                            left.push(c);
+                        }
+                        None => stack.push('!'),
+                    }
+                }
+                '&' => stack.push('|'),
+                '|' => stack.push('&'),
+                _ => (),
+            }
+        }
+        while let Some(c) = right.pop() {
+            stack.push(c);
+        }
         stack.push('|');
     }
-    pub fn rewrite_equivalence(&mut self, stack: &mut Vec<char>) {
-        let (rhs, lhs) = (stack.pop().unwrap(), stack.pop().unwrap());
-        stack.push(lhs);
-        stack.push('!');
-        stack.push(rhs);
-        stack.push('|');
-        stack.push(rhs);
-        stack.push('!');
-        stack.push(lhs);
-        stack.push('|');
-        stack.push('&');
+
+    fn rewrite_equivalence(&mut self, stack: &mut Vec<char>) {
+        let (mut right, mut left) = (self.get_child(stack), self.get_child(stack));
+        let (mut right_clone, mut left_clone) = (right.clone(), left.clone);
+        left.push('>');
+        right.push('>');
+        left.append(right_clone);
+        right.append(left_clone);
     }
 
     pub fn evaluate_cnf(&mut self, formula: &str) -> Result<String> {
