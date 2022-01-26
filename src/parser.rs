@@ -72,66 +72,16 @@ impl Parser {
         child
     }
 
-    pub fn evaluate_nnf(&mut self, formula: &str) -> Result<String> {
-        let mut lexer = formula.chars();
-        let mut stack = Vec::new();
-        while let Some(c) = lexer.next() {
-            println!("{}:\t{:?}", c, stack);
-            match c {
-                'A'..='Z' | '&' | '|' => stack.push(c),
-                '!' => {
-                    // println!("{}:\t{:?}", c, stack);
-                    let c = stack.pop().context("Unexpected end of formula")?;
-                    if c == '&' || c == '|' {
-                        let mut children = self.get_child(&mut stack);
-                        children.append(&mut self.get_child(&mut stack));
-                        while let Some(c) = children.pop() {
-                            match c {
-                                'A'..='Z' => {
-                                    stack.push(c);
-                                    match children.pop() {
-                                        Some('!') => (),
-                                        Some(c) => {
-                                            stack.push('!');
-                                            children.push(c);
-                                        }
-                                        None => stack.push('!'),
-                                    }
-                                }
-                                '&' => stack.push('|'),
-                                '|' => stack.push('&'),
-                                _ => (),
-                            }
-                        }
-                        stack.push(if c == '&' { '|' } else { '&' });
-                    } else if c != '!' {
-                        stack.push(c);
-                        stack.push('!');
-                    }
-                }
-                '>' => self.rewrite_material_condition(&mut stack),
-                '=' => self.rewrite_equivalence(&mut stack),
-                '^' => {
-                    self.rewrite_equivalence(&mut stack);
-                    stack.push('!');
-                }
-                _ => break,
-            }
-        }
-        Ok(String::from_iter(stack))
-    }
-
-    fn rewrite_material_condition(&mut self, stack: &mut Vec<char>) {
-        let (mut right, mut left) = (self.get_child(stack), self.get_child(stack));
-        while let Some(c) = left.pop() {
+    fn append(&mut self, stack: &mut Vec<char>, append: &mut Vec<char>) {
+        while let Some(c) = append.pop() {
             match c {
                 'A'..='Z' => {
                     stack.push(c);
-                    match left.pop() {
+                    match append.pop() {
                         Some('!') => (),
                         Some(c) => {
                             stack.push('!');
-                            left.push(c);
+                            append.push(c);
                         }
                         None => stack.push('!'),
                     }
@@ -141,19 +91,56 @@ impl Parser {
                 _ => (),
             }
         }
-        while let Some(c) = right.pop() {
+    }
+
+    fn apply_de_morgan(&mut self, stack: &mut Vec<char>) {
+        let c = stack.pop().unwrap();
+        if c == '&' || c == '|' {
+            let mut children = self.get_child(stack);
+            children.append(&mut self.get_child(stack));
+            self.append(stack, &mut children);
+            stack.push(if c == '&' { '|' } else { '&' });
+        } else if c != '!' {
             stack.push(c);
+            stack.push('!');
         }
+    }
+
+    fn rewrite_material_condition(&mut self, stack: &mut Vec<char>) {
+        let (mut right, mut left) = (self.get_child(stack), self.get_child(stack));
+        self.append(stack, &mut left);
+        right.reverse();
+        stack.append(&mut right);
         stack.push('|');
     }
 
     fn rewrite_equivalence(&mut self, stack: &mut Vec<char>) {
         let (mut right, mut left) = (self.get_child(stack), self.get_child(stack));
-        let (mut right_clone, mut left_clone) = (right.clone(), left.clone);
-        left.push('>');
-        right.push('>');
-        left.append(right_clone);
-        right.append(left_clone);
+        right.reverse();
+        left.reverse();
+        let (mut right_clone, mut left_clone) = (right.clone(), left.clone());
+        left.append(&mut right_clone);
+        right.append(&mut left_clone);
+        self.rewrite_material_condition(&mut left);
+        self.rewrite_material_condition(&mut right);
+        stack.append(&mut left);
+        stack.append(&mut right);
+        stack.push('&');
+    }
+
+    pub fn evaluate_nnf(&mut self, formula: &str) -> Result<String> {
+        let mut lexer = formula.chars();
+        let mut stack = Vec::new();
+        while let Some(c) = lexer.next() {
+            match c {
+                'A'..='Z' | '&' | '|' => stack.push(c),
+                '!' => self.apply_de_morgan(&mut stack),
+                '>' => self.rewrite_material_condition(&mut stack),
+                '=' => self.rewrite_equivalence(&mut stack),
+                _ => break,
+            }
+        }
+        Ok(String::from_iter(stack))
     }
 
     pub fn evaluate_cnf(&mut self, formula: &str) -> Result<String> {

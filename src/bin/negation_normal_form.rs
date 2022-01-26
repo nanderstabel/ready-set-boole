@@ -12,7 +12,7 @@ fn negation_normal_form(formula: &str) -> String {
 
 #[allow(dead_code)]
 fn main() {
-    negation_normal_form("AB&!CD&!>!");
+    negation_normal_form("A!B&!C|!D!&!E>>>>!&!A>B>!C>!!!F=G!&");
 }
 
 #[cfg(test)]
@@ -42,6 +42,14 @@ mod negation_normal_form {
             "A!B&C!&D!&E|"
         );
         assert_eq!(assert_equal_truthtable("AB|C&!").unwrap(), "A!B!&C!|");
+        assert_eq!(
+            assert_equal_truthtable("A!B&!C|!D!&!E!&!A>!!!F=G!&").unwrap(),
+            "AB!|C|D|E!&A|F|F!A!B&C!&D!&E|A!&|&G!&"
+        );
+        assert_eq!(
+            assert_equal_truthtable("A!B&!C|!D!&!E!&!A>B>!C>!!!F=G!&").unwrap(),
+            "A!B&C!&D!&E|A!&B|C|F|F!AB!|C|D|E!&A|B!&C!&|&G!&"
+        );
     }
 
     #[test]
@@ -53,13 +61,13 @@ mod negation_normal_form {
         assert_eq!(assert_equal_truthtable("AB&!CD&!>!").unwrap(), "A!B!|CD&&");
     }
 
-    // #[test]
-    // fn equivalence() {
-    //     assert_eq!(assert_equal_truthtable("AB=").unwrap(), "A!B|B!A|&");
-    //     assert_eq!(assert_equal_truthtable("A!B=").unwrap(), "AB|B!A!|&");
-    //     assert_eq!(assert_equal_truthtable("AB!=").unwrap(), "A!B!|BA|&");
-    //     assert_eq!(assert_equal_truthtable("A!B!=").unwrap(), "AB!|BA!|&");
-    // }
+    #[test]
+    fn equivalence() {
+        assert_eq!(assert_equal_truthtable("AB=").unwrap(), "A!B|B!A|&");
+        assert_eq!(assert_equal_truthtable("A!B=").unwrap(), "AB|B!A!|&");
+        assert_eq!(assert_equal_truthtable("AB!=").unwrap(), "A!B!|BA|&");
+        assert_eq!(assert_equal_truthtable("A!B!=").unwrap(), "AB!|BA!|&");
+    }
 
     #[test]
     fn morgans_law() {
