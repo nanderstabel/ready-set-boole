@@ -23,7 +23,7 @@ impl Parser {
                     let child = stack.pop().context("Unexpected end of formula")?;
                     stack.push(!child);
                 }
-                '&' | '|' | '^' | '>' | '=' => {
+                '&' | '|' | '>' | '=' => {
                     let (rhs, lhs) = (
                         stack.pop().context("Unexpected end of formula")?,
                         stack.pop().context("Unexpected end of formula")?,
@@ -33,7 +33,6 @@ impl Parser {
                         '=' => lhs == rhs,
                         '>' => !lhs | rhs,
                         '|' => lhs | rhs,
-                        '^' => lhs ^ rhs,
                         _ => false,
                     });
                 }
@@ -144,20 +143,41 @@ impl Parser {
     }
 
     pub fn evaluate_cnf(&mut self, formula: &str) -> Result<String> {
+        let mut form = String::new();
         if let Ok(table) = self.truth_table_from(formula) {
             let mut kmap = KMap::from(table);
             println!("\n\n{}", kmap);
+
             if let Some(minterms) = kmap.get_minterms() {
-                for term in minterms {
-                    for b in term.0 {
-                        println!("{:04b}: {}", b, b);
+                for term in &minterms {
+                    let mut tmp = vec![0, 0, 0, 0];
+                    let mut count = 0;
+                    for b in &term.0 {
+                        for bit in 0..(kmap.variables.len()) {
+                            if b & (1 << ((kmap.variables.len() - 1) - bit)) != 0 {
+                                tmp[bit] += 1;
+                            }
+                        }
                     }
-                    println!("");
+                    for (i, v) in kmap.variables.iter().enumerate() {
+                        if tmp[i] == 0 {
+                            form.push(*v);
+                            count += 1;
+                        } else if tmp[i] == term.len() {
+                            form.push(*v);
+                            form.push('!');
+                            count += 1;
+                        }
+                    }
+                    if count > 1 {
+                        form.push_str(&"|".repeat(count - 1));
+                    }
                 }
+                form.push_str(&"&".repeat(minterms.len() - 1));
             }
         }
 
-        Ok(String::from(formula))
+        Ok(String::from(form))
     }
 
     pub fn is_satisfiable(&mut self, formula: &str) -> bool {

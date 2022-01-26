@@ -8,6 +8,7 @@ use std::fmt;
 pub struct KMap {
     x: usize,
     y: usize,
+    pub variables: Vec<char>,
     map: Vec<Vec<(u32, bool)>>,
 }
 
@@ -22,6 +23,7 @@ impl KMap {
         KMap {
             x,
             y,
+            variables: table.variables.clone(),
             map: (0..y)
                 .map(|j| gray_code(j as u32))
                 .map(|j| {
@@ -52,6 +54,7 @@ impl KMap {
         KMap {
             x: self.y,
             y: self.x,
+            variables: self.variables.clone(),
             map: transpose,
         }
     }
