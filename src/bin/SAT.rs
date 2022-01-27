@@ -7,7 +7,7 @@ fn sat(formula: &str) -> bool {
 
 #[allow(dead_code)]
 fn main() {
-    sat("AB|C&!");
+    sat("AA^");
 }
 
 #[cfg(test)]

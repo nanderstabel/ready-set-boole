@@ -2,6 +2,7 @@ use crate::kmap::KMap;
 use crate::permutationlist::PermutationList;
 use crate::truthtable::TruthTable;
 use anyhow::{Context, Result};
+use std::collections::HashMap;
 
 pub struct Parser {
     pub result: Option<bool>,
@@ -23,7 +24,7 @@ impl Parser {
                     let child = stack.pop().context("Unexpected end of formula")?;
                     stack.push(!child);
                 }
-                '&' | '|' | '>' | '=' => {
+                '&' | '|' | '^' | '>' | '=' => {
                     let (rhs, lhs) = (
                         stack.pop().context("Unexpected end of formula")?,
                         stack.pop().context("Unexpected end of formula")?,
@@ -33,6 +34,7 @@ impl Parser {
                         '=' => lhs == rhs,
                         '>' => !lhs | rhs,
                         '|' => lhs | rhs,
+                        '^' => lhs ^ rhs,
                         _ => false,
                     });
                 }
@@ -105,6 +107,21 @@ impl Parser {
         }
     }
 
+    fn rewrite_exclusive_or(&mut self, stack: &mut Vec<char>) {
+        let (mut right, mut left) = (self.get_child(stack), self.get_child(stack));
+        right.reverse();
+        left.reverse();
+        let (mut right_clone, mut left_clone) = (right.clone(), left.clone());
+        stack.append(&mut left);
+        stack.append(&mut right);
+        stack.push('|');
+        stack.append(&mut left_clone);
+        stack.append(&mut right_clone);
+        stack.push('&');
+        self.apply_de_morgan(stack);
+        stack.push('&');
+    }
+
     fn rewrite_material_condition(&mut self, stack: &mut Vec<char>) {
         let (mut right, mut left) = (self.get_child(stack), self.get_child(stack));
         self.append(stack, &mut left);
@@ -134,6 +151,7 @@ impl Parser {
             match c {
                 'A'..='Z' | '&' | '|' => stack.push(c),
                 '!' => self.apply_de_morgan(&mut stack),
+                '^' => self.rewrite_exclusive_or(&mut stack),
                 '>' => self.rewrite_material_condition(&mut stack),
                 '=' => self.rewrite_equivalence(&mut stack),
                 _ => break,
@@ -146,7 +164,6 @@ impl Parser {
         let mut form = String::new();
         if let Ok(table) = self.truth_table_from(formula) {
             let mut kmap = KMap::from(table);
-            println!("\n\n{}", kmap);
 
             if let Some(minterms) = kmap.get_minterms() {
                 for term in &minterms {
@@ -190,5 +207,16 @@ impl Parser {
             }
         }
         false
+    }
+
+    pub fn evaluate_set(&mut self, formula: &str, sets: &[&[i32]]) -> Result<Vec<i32>> {
+        let formula = self.evaluate_nnf(formula.clone())?;
+        if let Ok(table) = self.truth_table_from(&formula) {
+            let mut map: HashMap<char, &&[i32]> =
+                table.variables.into_iter().zip(sets.iter()).collect();
+            println!("{:?}", map);
+        }
+
+        Ok(Vec::from([0]))
     }
 }

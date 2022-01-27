@@ -3,8 +3,6 @@ use rsb::parser::Parser;
 fn negation_normal_form(formula: &str) -> String {
     let mut parser = Parser::new();
     if let Ok(nnf) = parser.evaluate_nnf(formula) {
-        println!("\n{:?}", formula);
-        println!("\n{:?}", nnf);
         return nnf;
     }
     String::from(formula)
@@ -12,7 +10,7 @@ fn negation_normal_form(formula: &str) -> String {
 
 #[allow(dead_code)]
 fn main() {
-    negation_normal_form("A!B&!C|!D!&!E>>>>!&!A>B>!C>!!!F=G!&");
+    negation_normal_form("AB^");
 }
 
 #[cfg(test)]
@@ -53,6 +51,14 @@ mod negation_normal_form {
     }
 
     #[test]
+    fn exclusive_or() {
+        assert_eq!(assert_equal_truthtable("AB^").unwrap(), "AB|A!B!|&");
+        assert_eq!(assert_equal_truthtable("A!B^").unwrap(), "A!B|AB!|&");
+        assert_eq!(assert_equal_truthtable("AB!^").unwrap(), "AB!|A!B|&");
+        assert_eq!(assert_equal_truthtable("A!B!^").unwrap(), "A!B!|AB|&");
+    }
+
+    #[test]
     fn material_conditions() {
         assert_eq!(assert_equal_truthtable("AB>").unwrap(), "A!B|");
         assert_eq!(assert_equal_truthtable("A!B>").unwrap(), "AB|");
@@ -79,5 +85,13 @@ mod negation_normal_form {
         assert_eq!(assert_equal_truthtable("A!B|!").unwrap(), "AB!&");
         assert_eq!(assert_equal_truthtable("AB!|!").unwrap(), "A!B&");
         assert_eq!(assert_equal_truthtable("A!B!|!").unwrap(), "AB&");
+    }
+
+    #[test]
+    fn single_variable() {
+        assert_eq!(assert_equal_truthtable("AA=").unwrap(), "A!A|A!A|&");
+        assert_eq!(assert_equal_truthtable("A!A=").unwrap(), "AA|A!A!|&");
+        assert_eq!(assert_equal_truthtable("AA!=").unwrap(), "A!A!|AA|&");
+        assert_eq!(assert_equal_truthtable("A!A!=").unwrap(), "AA!|AA!|&");
     }
 }

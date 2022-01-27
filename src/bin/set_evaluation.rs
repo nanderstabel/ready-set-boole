@@ -1,4 +1,12 @@
+use rsb::parser::Parser;
+
 fn eval_set(formula: &str, sets: &[&[i32]]) -> Vec<i32> {
+    let mut parser = Parser::new();
+    if let Ok(set) = parser.evaluate_set(formula, sets) {
+        println!("{:?}", set);
+        return set;
+    }
+
     Vec::from([0])
 }
 

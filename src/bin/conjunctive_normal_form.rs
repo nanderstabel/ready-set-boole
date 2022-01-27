@@ -10,7 +10,7 @@ fn conjunctive_normal_form(formula: &str) -> String {
 
 #[allow(dead_code)]
 fn main() {
-    conjunctive_normal_form("AB|!");
+    conjunctive_normal_form("AA&AA&A&");
 }
 
 #[cfg(test)]
@@ -38,5 +38,16 @@ mod conjunctive_normal_form {
         assert_equal_truthtable("AB&!C!|");
         assert_equal_truthtable("AB|!C!&");
         assert_equal_truthtable("AB&!CD&!>!");
+    }
+
+    #[test]
+    fn single_variable() {
+        assert_equal_truthtable("AA&!");
+        assert_equal_truthtable("AA|!");
+        assert_equal_truthtable("AA|A&");
+        assert_equal_truthtable("AA|A|A|");
+        assert_equal_truthtable("AA&AA&A&");
+        assert_equal_truthtable("AA&!A!|");
+        assert_equal_truthtable("AA|!A!&");
     }
 }

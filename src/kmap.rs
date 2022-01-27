@@ -15,6 +15,7 @@ pub struct KMap {
 impl KMap {
     pub fn from(table: TruthTable) -> Self {
         let (y, x) = match table.variables.len() {
+            1 => (2, 1),
             2 => (2, 2),
             3 => (4, 2),
             4 => (4, 4),
