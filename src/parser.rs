@@ -2,7 +2,7 @@ use crate::kmap::KMap;
 use crate::permutationlist::PermutationList;
 use crate::truthtable::TruthTable;
 use anyhow::{Context, Result};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 pub struct Parser {
     pub result: Option<bool>,
@@ -211,6 +211,7 @@ impl Parser {
 
     pub fn evaluate_set(&mut self, formula: &str, sets: &[&[i32]]) -> Result<Vec<i32>> {
         let formula = self.evaluate_nnf(formula.clone())?;
+        let mut res = HashSet::new();
         if let Ok(table) = self.truth_table_from(&formula) {
             let mut map: HashMap<char, &&[i32]> =
                 table.variables.into_iter().zip(sets.iter()).collect();
