@@ -21,4 +21,24 @@ mod sat {
         assert_eq!(sat("AA!&"), false);
         assert_eq!(sat("AA^"), false);
     }
+
+    #[test]
+    fn eval_sheet() {
+        assert_eq!(sat("A"), true);
+        assert_eq!(sat("A!"), true);
+        assert_eq!(sat("AA|"), true);
+        assert_eq!(sat("AA&"), true);
+        assert_eq!(sat("AA!&"), false);
+        assert_eq!(sat("AA^"), false);
+        assert_eq!(sat("AB^"), true);
+        assert_eq!(sat("AB="), true);
+        assert_eq!(sat("AA>"), true);
+        assert_eq!(sat("AA!>"), true);
+
+        assert_eq!(sat("ABC||"), true);
+        assert_eq!(sat("AB&A!B!&&"), false);
+        assert_eq!(sat("ABCDE&&&&"), true);
+        assert_eq!(sat("AAA^^"), true);
+        assert_eq!(sat("ABCDE^^^^"), true);
+    }
 }

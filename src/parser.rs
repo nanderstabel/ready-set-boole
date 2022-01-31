@@ -227,97 +227,39 @@ impl Parser {
             let u: HashSet<i32> = u.iter().cloned().collect::<HashSet<i32>>();
             let map: HashMap<char, &&[i32]> =
                 table.variables.into_iter().zip(sets.iter()).collect();
-            let mut stack: Vec<Set> = Vec::new();
+            let mut stack: Vec<HashSet<i32>> = Vec::new();
             while let Some(c) = lexer.next() {
                 match c {
                     'A'..='Z' => {
                         let tmp = map.get(&c).unwrap();
-                        stack.push(Set::Set(HashSet::from_iter(
+                        stack.push(HashSet::from_iter(
                             tmp.iter().cloned().collect::<HashSet<i32>>(),
-                        )));
+                        ));
                     }
                     '!' => {
-                        if let Set::Set(child) = stack.pop().unwrap() {
-                            stack.push(Set::Negation(child));
-                        }
+                        let tmp = stack.pop().unwrap();
+                        stack.push(u.difference(&tmp).cloned().collect());
                     }
-                    '&' => {
+                    '&' | '|' => {
                         let (rhs, lhs) = (
                             stack.pop().context("Unexpected end of formula")?,
                             stack.pop().context("Unexpected end of formula")?,
                         );
-                        match (lhs, rhs) {
-                            (Set::Set(l), Set::Set(r)) => {
-                                stack.push(Set::Set(l.intersection(&r).cloned().collect()))
-                            }
-
-                            (Set::Set(l), Set::Negation(r)) => {
-                                stack.push(Set::Set(l.difference(&r).cloned().collect()))
-                            }
-
-                            (Set::Negation(l), Set::Set(r)) => {
-                                stack.push(Set::Set(r.difference(&l).cloned().collect()))
-                            }
-
-                            (Set::Negation(l), Set::Negation(r)) => {
-                                stack.push(Set::Set(
-                                    (u.difference(&l).cloned().collect::<HashSet<i32>>())
-                                        .difference(&r)
-                                        .cloned()
-                                        .collect(),
-                                ));
-                            }
+                        if c == '&' {
+                            stack.push(lhs.intersection(&rhs).cloned().collect());
+                        } else if c == '|' {
+                            stack.push(lhs.union(&rhs).cloned().collect());
                         }
                     }
-                    '|' => {
-                        let (rhs, lhs) = (
-                            stack.pop().context("Unexpected end of formula")?,
-                            stack.pop().context("Unexpected end of formula")?,
-                        );
-                        match (lhs, rhs) {
-                            (Set::Set(l), Set::Set(r)) => {
-                                stack.push(Set::Set(l.union(&r).cloned().collect()))
-                            }
-                            (Set::Set(l), Set::Negation(r)) => {
-                                stack.push(Set::Set(
-                                    (u.difference(&r).cloned().collect::<HashSet<i32>>())
-                                        .union(&l)
-                                        .cloned()
-                                        .collect(),
-                                ));
-                            }
-                            (Set::Negation(l), Set::Set(r)) => {
-                                stack.push(Set::Set(
-                                    (u.difference(&l).cloned().collect::<HashSet<i32>>())
-                                        .union(&r)
-                                        .cloned()
-                                        .collect(),
-                                ));
-                            }
-                            (Set::Negation(l), Set::Negation(r)) => stack.push(Set::Set(
-                                u.difference(
-                                    &(l.intersection(&r).cloned().collect::<HashSet<i32>>()),
-                                )
-                                .cloned()
-                                .collect(),
-                            )),
-                        }
-                    }
-                    _ => {}
+                    _ => (),
                 }
             }
             if let Some(res) = stack.pop() {
-                match res {
-                    Set::Set(hs) => {
-                        let mut v = Vec::from_iter(hs);
-                        v.sort();
-                        return Ok(v);
-                    }
-                    Set::Negation(_) => return Ok(Vec::new()),
-                }
+                let mut v = Vec::from_iter(res);
+                v.sort();
+                return Ok(v);
             }
         }
-
         Ok(Vec::from([]))
     }
 }

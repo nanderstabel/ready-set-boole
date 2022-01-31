@@ -25,4 +25,14 @@ mod adder {
         assert_eq!(adder(4294967295, 2), 1);
         assert_eq!(adder(4294967295, 4294967295), 4294967294);
     }
+
+    #[test]
+    fn eval_sheet() {
+        assert_eq!(adder(0, 0), 0);
+        assert_eq!(adder(1, 0), 1);
+        assert_eq!(adder(0, 1), 1);
+        assert_eq!(adder(1, 1), 2);
+        assert_eq!(adder(1, 2), 3);
+        assert_eq!(adder(2, 2), 4);
+    }
 }

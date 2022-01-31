@@ -94,4 +94,25 @@ mod negation_normal_form {
         assert_eq!(assert_equal_truthtable("AA!=").unwrap(), "A!A!|AA|&");
         assert_eq!(assert_equal_truthtable("A!A!=").unwrap(), "AA!|AA!|&");
     }
+
+    #[test]
+    fn eval_sheet() {
+        assert_eq!(assert_equal_truthtable("A").unwrap(), "A");
+        assert_eq!(assert_equal_truthtable("A!").unwrap(), "A!");
+        assert_eq!(assert_equal_truthtable("AB&!").unwrap(), "A!B!|");
+        assert_eq!(assert_equal_truthtable("AB|!").unwrap(), "A!B!&");
+        assert_eq!(assert_equal_truthtable("AB>!").unwrap(), "AB!&");
+        assert_eq!(assert_equal_truthtable("AB=!").unwrap(), "AB!&BA!&|");
+
+        assert_eq!(assert_equal_truthtable("ABC||").unwrap(), "ABC||");
+        assert_eq!(assert_equal_truthtable("ABC||!").unwrap(), "A!B!C!&&");
+        assert_eq!(assert_equal_truthtable("ABC|&").unwrap(), "ABC|&");
+        assert_eq!(assert_equal_truthtable("ABC&|").unwrap(), "ABC&|");
+        assert_eq!(assert_equal_truthtable("ABC&|!").unwrap(), "A!B!C!|&");
+        assert_eq!(
+            assert_equal_truthtable("ABC^^").unwrap(),
+            "ABC|B!C!|&|A!B!C!&BC&||&"
+        );
+        assert_eq!(assert_equal_truthtable("ABC>>").unwrap(), "A!B!C||");
+    }
 }

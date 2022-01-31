@@ -83,4 +83,28 @@ mod set_evaluation {
             [0, 1, 4, 5]
         );
     }
+
+    #[test]
+    fn eval_sheet() {
+        assert_eq!(eval_set("A", &[&[]]), []);
+        assert_eq!(eval_set("A!", &[&[]]), []);
+        assert_eq!(eval_set("A", &[&[42]]), [42]);
+        assert_eq!(eval_set("A!", &[&[42]]), []);
+        assert_eq!(eval_set("A!", &[&[], &[42]]), [42]);
+        assert_eq!(eval_set("AB|", &[&[0, 1, 2], &[]]), [0, 1, 2]);
+        assert_eq!(eval_set("AB&", &[&[0, 1, 2], &[]]), []);
+        assert_eq!(eval_set("AB&", &[&[0, 1, 2], &[0]]), [0]);
+        assert_eq!(eval_set("AB&", &[&[0, 1, 2], &[42]]), []);
+        assert_eq!(eval_set("AB^", &[&[0, 1, 2], &[0]]), [1, 2]);
+        assert_eq!(eval_set("AB>", &[&[0], &[1, 2]]), [1, 2]);
+        assert_eq!(eval_set("AB>", &[&[0], &[0, 1, 2]]), [0, 1, 2]);
+
+        assert_eq!(eval_set("ABC||", &[&[], &[], &[]]), []);
+        assert_eq!(eval_set("ABC||", &[&[0], &[1], &[2]]), [0, 1, 2]);
+        assert_eq!(eval_set("ABC||", &[&[0], &[0], &[0]]), [0]);
+        assert_eq!(eval_set("ABC&&", &[&[0], &[0], &[]]), []);
+        assert_eq!(eval_set("ABC&&", &[&[0], &[0], &[0]]), [0]);
+        assert_eq!(eval_set("ABC^^", &[&[0], &[0], &[0]]), [0]);
+        assert_eq!(eval_set("ABC>>", &[&[0], &[0], &[0]]), [0]);
+    }
 }

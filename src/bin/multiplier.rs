@@ -23,4 +23,14 @@ mod multiplier {
     fn overflow() {
         assert_eq!(multiplier(4294967295, 4294967295), 1);
     }
+
+    #[test]
+    fn eval_sheet() {
+        assert_eq!(multiplier(0, 0), 0);
+        assert_eq!(multiplier(1, 0), 0);
+        assert_eq!(multiplier(0, 1), 0);
+        assert_eq!(multiplier(1, 1), 1);
+        assert_eq!(multiplier(1, 2), 2);
+        assert_eq!(multiplier(2, 2), 4);
+    }
 }

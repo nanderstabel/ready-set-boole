@@ -50,4 +50,22 @@ mod conjunctive_normal_form {
         assert_equal_truthtable("AA&!A!|");
         assert_equal_truthtable("AA|!A!&");
     }
+
+    #[test]
+    fn eval_sheet() {
+        assert_equal_truthtable("A");
+        assert_equal_truthtable("A!");
+        assert_equal_truthtable("AB&!");
+        assert_equal_truthtable("AB|!");
+        assert_equal_truthtable("AB>!");
+        assert_equal_truthtable("AB=!");
+
+        assert_equal_truthtable("ABC||");
+        assert_equal_truthtable("ABC||!");
+        assert_equal_truthtable("ABC|&");
+        assert_equal_truthtable("ABC&|");
+        assert_equal_truthtable("ABC&|!");
+        assert_equal_truthtable("ABC^^");
+        assert_equal_truthtable("ABC>>");
+    }
 }

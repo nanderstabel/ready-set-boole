@@ -32,9 +32,33 @@ mod powerset {
                 [1].to_vec(),
                 [1, 2].to_vec(),
                 [1, 2, 3].to_vec(),
+                [1, 3].to_vec(),
                 [2].to_vec(),
                 [2, 3].to_vec(),
                 [3].to_vec(),
+                [].to_vec()
+            ]
+        );
+    }
+
+    #[test]
+    fn eval_sheet() {
+        assert_eq!(powerset(&[]), [[]]);
+        assert_eq!(powerset(&[0]), [[0].to_vec(), [].to_vec()]);
+        assert_eq!(
+            powerset(&[0, 1]),
+            [[0].to_vec(), [0, 1].to_vec(), [1].to_vec(), [].to_vec()]
+        );
+        assert_eq!(
+            powerset(&[0, 1, 2]),
+            [
+                [0].to_vec(),
+                [0, 1].to_vec(),
+                [0, 1, 2].to_vec(),
+                [0, 2].to_vec(),
+                [1].to_vec(),
+                [1, 2].to_vec(),
+                [2].to_vec(),
                 [].to_vec()
             ]
         );
