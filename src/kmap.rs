@@ -129,7 +129,6 @@ impl fmt::Display for KMap {
         for y in &self.map {
             for (bit, b) in y {
                 write!(f, " {:2}:{:5} ", bit, b)?;
-                // write!(f, " {:04b}:{:5} ", bit, b)?;
             }
             write!(f, "\n")?;
         }
