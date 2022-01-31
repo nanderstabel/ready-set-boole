@@ -218,22 +218,24 @@ impl Parser {
         let formula = self.evaluate_nnf(formula.clone())?;
         if let Ok(table) = self.truth_table_from(&formula) {
             let mut lexer = formula.chars();
-            let mut u: Vec<i32> = Vec::new();
-            for set in sets.into_iter() {
-                for i in set.into_iter() {
-                    u.push(*i);
-                }
-            }
-            let u: HashSet<i32> = u.iter().cloned().collect::<HashSet<i32>>();
+            let u: HashSet<i32> = (sets
+                .iter()
+                .flat_map(|s| s.iter().cloned())
+                .collect::<Vec<i32>>())
+            .iter()
+            .cloned()
+            .collect::<HashSet<i32>>();
             let map: HashMap<char, &&[i32]> =
                 table.variables.into_iter().zip(sets.iter()).collect();
             let mut stack: Vec<HashSet<i32>> = Vec::new();
             while let Some(c) = lexer.next() {
                 match c {
                     'A'..='Z' => {
-                        let tmp = map.get(&c).unwrap();
                         stack.push(HashSet::from_iter(
-                            tmp.iter().cloned().collect::<HashSet<i32>>(),
+                            (map.get(&c).unwrap())
+                                .iter()
+                                .cloned()
+                                .collect::<HashSet<i32>>(),
                         ));
                     }
                     '!' => {
