@@ -1,7 +1,7 @@
 use crate::kmap::KMap;
 use crate::permutationlist::PermutationList;
 use crate::truthtable::TruthTable;
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Context, Result};
 use std::collections::{HashMap, HashSet};
 
 pub enum Set {
@@ -260,6 +260,6 @@ impl Parser {
                 return Ok(v);
             }
         }
-        Ok(Vec::from([]))
+        Err(anyhow!("Invalid formula!"))
     }
 }
