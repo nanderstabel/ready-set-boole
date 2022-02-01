@@ -63,3 +63,5 @@ free to use the method you want as long as it stays bijective. If the input is o
 
 ## Inverse function
 The inverse function f−1 of the function f, so this time, this is a [**space-filling curve**](https://en.wikipedia.org/wiki/Z-order_curve). If the input is out of range, the behaviour is undefined.
+
+For more detailed information about the requirements of this project check [this](https://github.com/nanderstabel/ready-set-boole/blob/main/ready-set-boole.pdf).
